@@ -225,6 +225,38 @@ async def get_game_by_share_code(share_code: str):
         raise HTTPException(status_code=404, detail="Game not found")
     return Game(**game)
 
+class JoinTeamRequest(BaseModel):
+    team: str  # team_a or team_b
+    player_name: str
+
+@api_router.post("/games/{game_id}/join")
+async def join_game_team(game_id: str, request: JoinTeamRequest):
+    """Join a team in an existing game"""
+    game = await db.games.find_one({"id": game_id})
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    game_obj = Game(**game)
+    
+    # Create new player
+    new_player = Player(name=request.player_name)
+    
+    # Add to the selected team
+    if request.team == "team_a":
+        game_obj.team_a.players.append(new_player)
+    elif request.team == "team_b":
+        game_obj.team_b.players.append(new_player)
+    else:
+        raise HTTPException(status_code=400, detail="Invalid team")
+    
+    # Update in database
+    await db.games.update_one(
+        {"id": game_id},
+        {"$set": game_obj.dict()}
+    )
+    
+    return game_obj
+
 @api_router.post("/games/{game_id}/turn")
 async def submit_turn(game_id: str, result: TurnResult):
     """Submit a turn result (correct or skip)"""
