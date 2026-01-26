@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,11 +9,15 @@ import {
   Dimensions,
   Modal,
   Platform,
+  Share,
+  Linking,
+  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import QRCode from 'react-native-qrcode-svg';
 
 const { width } = Dimensions.get('window');
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
@@ -30,16 +34,29 @@ interface Movie {
   genre?: string;
 }
 
+interface Player {
+  id: string;
+  name: string;
+}
+
+interface Team {
+  name: string;
+  players: Player[];
+  score: number;
+  current_actor_index: number;
+}
+
 interface Game {
   id: string;
-  team_a: { name: string; players: { name: string }[]; score: number };
-  team_b: { name: string; players: { name: string }[]; score: number };
+  team_a: Team;
+  team_b: Team;
   settings: { timer_seconds: number; total_rounds: number; difficulty: string };
   current_turn: string;
   current_round: number;
   used_movie_ids: string[];
   status: string;
   winner?: string;
+  share_code: string;
 }
 
 enum GamePhase {
@@ -57,6 +74,7 @@ export default function GamePlayScreen() {
   const [timeLeft, setTimeLeft] = useState(60);
   const [showMovie, setShowMovie] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const progressAnim = useRef(new Animated.Value(1)).current;
@@ -91,7 +109,8 @@ export default function GamePlayScreen() {
       const response = await fetch(url);
 
       if (!response.ok) {
-        Alert.alert('No more movies', 'All movies have been used in this game!');
+        Alert.alert('No more movies', 'All movies have been used! Resetting movie pool...');
+        await fetch(`${BACKEND_URL}/api/movies/reset-used`, { method: 'POST' });
         return;
       }
 
@@ -219,9 +238,42 @@ export default function GamePlayScreen() {
     router.replace('/');
   };
 
+  const shareGame = async () => {
+    if (!game) return;
+    
+    const shareUrl = `${BACKEND_URL}/join/${game.share_code}`;
+    const message = `🎬 Join my Dumb Charades game!\n\nGame Code: ${game.share_code}\n\nDownload the app and join using this code!\n\n${shareUrl}`;
+    
+    try {
+      if (Platform.OS === 'web') {
+        setShowShareModal(true);
+      } else {
+        await Share.share({
+          message: message,
+          title: 'Join Dumb Charades Game',
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
+  };
+
+  const shareViaWhatsApp = () => {
+    if (!game) return;
+    const message = encodeURIComponent(`🎬 Join my Dumb Charades game!\n\nGame Code: ${game.share_code}\n\nJoin us for some Bollywood fun!`);
+    const whatsappUrl = `https://wa.me/?text=${message}`;
+    Linking.openURL(whatsappUrl);
+  };
+
   const getCurrentTeam = () => {
     if (!game) return null;
     return game.current_turn === 'team_a' ? game.team_a : game.team_b;
+  };
+
+  const getCurrentActor = () => {
+    const team = getCurrentTeam();
+    if (!team || team.players.length === 0) return null;
+    return team.players[team.current_actor_index];
   };
 
   const getTeamColor = () => {
@@ -245,6 +297,8 @@ export default function GamePlayScreen() {
     );
   }
 
+  const currentActor = getCurrentActor();
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -255,7 +309,9 @@ export default function GamePlayScreen() {
         <Text style={styles.roundText}>
           Round {game.current_round}/{game.settings.total_rounds}
         </Text>
-        <View style={styles.placeholder} />
+        <TouchableOpacity onPress={shareGame} style={styles.shareButton}>
+          <Ionicons name="share-social" size={24} color="#f8d56b" />
+        </TouchableOpacity>
       </View>
 
       {/* Scoreboard */}
@@ -274,12 +330,22 @@ export default function GamePlayScreen() {
       </View>
 
       {/* Main Content */}
-      <View style={styles.mainContent}>
+      <ScrollView style={styles.mainContent} contentContainerStyle={styles.mainContentContainer}>
         {phase === GamePhase.READY && (
           <View style={styles.readyContainer}>
             <View style={[styles.turnBadge, { backgroundColor: getTeamColor() }]}>
               <Text style={styles.turnBadgeText}>{getCurrentTeam()?.name}'s Turn</Text>
             </View>
+            
+            {/* Current Actor Display */}
+            {currentActor && (
+              <View style={styles.actorContainer}>
+                <Ionicons name="person-circle" size={60} color={getTeamColor()} />
+                <Text style={styles.actorLabel}>Actor</Text>
+                <Text style={styles.actorName}>{currentActor.name}</Text>
+              </View>
+            )}
+            
             <Text style={styles.instructionText}>Get ready to act!</Text>
             <TouchableOpacity
               style={[styles.bigButton, { backgroundColor: getTeamColor() }]}
@@ -294,6 +360,13 @@ export default function GamePlayScreen() {
 
         {phase === GamePhase.REVEAL && currentMovie && (
           <View style={styles.revealContainer}>
+            {currentActor && (
+              <View style={styles.actorBadge}>
+                <Ionicons name="person" size={20} color="#fff" />
+                <Text style={styles.actorBadgeText}>{currentActor.name} is acting!</Text>
+              </View>
+            )}
+            
             <Text style={styles.revealTitle}>Movie for Actor</Text>
             <TouchableOpacity
               style={styles.revealCard}
@@ -373,15 +446,15 @@ export default function GamePlayScreen() {
                   <Text style={styles.hintLabel}>Year</Text>
                   <Text style={styles.hintValue}>{currentMovie.year}</Text>
                 </View>
-                <View style={styles.hintBox}>
-                  <Ionicons name="man" size={24} color="#f8d56b" />
+                <View style={[styles.hintBox, styles.hintBoxWide]}>
+                  <Ionicons name="man" size={24} color="#4ecdc4" />
                   <Text style={styles.hintLabel}>Hero</Text>
-                  <Text style={styles.hintValue}>{currentMovie.hero}</Text>
+                  <Text style={styles.hintValueLarge}>{currentMovie.hero}</Text>
                 </View>
-                <View style={styles.hintBox}>
-                  <Ionicons name="woman" size={24} color="#f8d56b" />
+                <View style={[styles.hintBox, styles.hintBoxWide]}>
+                  <Ionicons name="woman" size={24} color="#e94560" />
                   <Text style={styles.hintLabel}>Heroine</Text>
-                  <Text style={styles.hintValue}>{currentMovie.heroine}</Text>
+                  <Text style={styles.hintValueLarge}>{currentMovie.heroine}</Text>
                 </View>
               </View>
             </View>
@@ -413,7 +486,7 @@ export default function GamePlayScreen() {
             <Text style={styles.resultText}>Next team's turn...</Text>
           </View>
         )}
-      </View>
+      </ScrollView>
 
       {/* Exit Modal */}
       <Modal visible={showExitModal} transparent animationType="fade">
@@ -436,6 +509,51 @@ export default function GamePlayScreen() {
                 <Text style={styles.modalConfirmText}>Exit</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Share Modal */}
+      <Modal visible={showShareModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.shareModalContent}>
+            <TouchableOpacity 
+              style={styles.closeShareModal}
+              onPress={() => setShowShareModal(false)}
+            >
+              <Ionicons name="close" size={28} color="#fff" />
+            </TouchableOpacity>
+            
+            <Text style={styles.shareModalTitle}>Share Game</Text>
+            
+            <View style={styles.qrContainer}>
+              {Platform.OS !== 'web' ? (
+                <QRCode
+                  value={`${BACKEND_URL}/join/${game.share_code}`}
+                  size={180}
+                  backgroundColor="#fff"
+                  color="#1a1a2e"
+                />
+              ) : (
+                <View style={styles.qrPlaceholder}>
+                  <Ionicons name="qr-code" size={80} color="#f8d56b" />
+                </View>
+              )}
+            </View>
+            
+            <View style={styles.shareCodeContainer}>
+              <Text style={styles.shareCodeLabel}>Game Code</Text>
+              <Text style={styles.shareCode}>{game.share_code}</Text>
+            </View>
+            
+            <TouchableOpacity
+              style={styles.whatsappButton}
+              onPress={shareViaWhatsApp}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="logo-whatsapp" size={28} color="#fff" />
+              <Text style={styles.whatsappButtonText}>Share via WhatsApp</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -472,14 +590,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#f8d56b',
   },
-  placeholder: {
-    width: 44,
+  shareButton: {
+    padding: 8,
   },
   scoreboard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
+    paddingVertical: 12,
     paddingHorizontal: 20,
   },
   teamScore: {
@@ -495,11 +613,11 @@ const styles = StyleSheet.create({
     borderColor: '#f8d56b',
   },
   teamName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
   score: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#fff',
   },
@@ -507,18 +625,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   vsText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#666',
   },
   mainContent: {
     flex: 1,
-    padding: 20,
+  },
+  mainContentContainer: {
+    padding: 16,
+    paddingBottom: 40,
   },
   readyContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 400,
   },
   turnBadge: {
     paddingVertical: 12,
@@ -527,27 +649,46 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   turnBadgeText: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#fff',
   },
-  instructionText: {
-    fontSize: 18,
+  actorContainer: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(248, 213, 107, 0.1)',
+    paddingVertical: 20,
+    paddingHorizontal: 40,
+    borderRadius: 20,
+    marginBottom: 20,
+  },
+  actorLabel: {
+    fontSize: 14,
     color: '#a0a0a0',
-    marginBottom: 40,
+    marginTop: 8,
+  },
+  actorName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginTop: 4,
+  },
+  instructionText: {
+    fontSize: 16,
+    color: '#a0a0a0',
+    marginBottom: 30,
   },
   bigButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 24,
+    paddingVertical: 20,
     paddingHorizontal: 48,
     borderRadius: 40,
     width: '100%',
     maxWidth: 300,
   },
   bigButtonText: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#fff',
     marginLeft: 12,
@@ -556,11 +697,27 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 400,
+  },
+  actorBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(248, 213, 107, 0.2)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginBottom: 16,
+  },
+  actorBadgeText: {
+    fontSize: 14,
+    color: '#f8d56b',
+    marginLeft: 8,
+    fontWeight: '600',
   },
   revealTitle: {
-    fontSize: 20,
+    fontSize: 18,
     color: '#f8d56b',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   revealCard: {
     width: '100%',
@@ -572,26 +729,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
-    marginBottom: 30,
+    marginBottom: 24,
   },
   movieTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#fff',
     textAlign: 'center',
   },
   movieYear: {
-    fontSize: 20,
+    fontSize: 18,
     color: '#f8d56b',
     marginTop: 8,
   },
   tapToReveal: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#f8d56b',
     marginTop: 16,
   },
   onlyActorText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#e94560',
     marginTop: 8,
   },
@@ -610,10 +767,10 @@ const styles = StyleSheet.create({
   },
   timerContainer: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   timerText: {
-    fontSize: 64,
+    fontSize: 56,
     fontWeight: 'bold',
     color: '#f8d56b',
   },
@@ -621,7 +778,7 @@ const styles = StyleSheet.create({
     height: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 4,
-    marginBottom: 24,
+    marginBottom: 20,
     overflow: 'hidden',
   },
   progressBar: {
@@ -632,10 +789,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(248, 213, 107, 0.08)',
     borderRadius: 16,
     padding: 16,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   hintsTitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#f8d56b',
     textAlign: 'center',
     marginBottom: 16,
@@ -653,13 +810,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
+  hintBoxWide: {
+    width: '48%',
+  },
   hintLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#a0a0a0',
     marginTop: 4,
   },
   hintValue: {
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  hintValueLarge: {
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#fff',
     marginTop: 2,
@@ -675,7 +842,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 18,
+    paddingVertical: 16,
     borderRadius: 16,
   },
   skipButton: {
@@ -685,7 +852,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#4ecdc4',
   },
   actionButtonText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
     marginLeft: 8,
@@ -694,6 +861,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 400,
   },
   resultText: {
     fontSize: 24,
@@ -752,5 +920,72 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  shareModalContent: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    width: '90%',
+    maxWidth: 360,
+    borderWidth: 2,
+    borderColor: '#f8d56b',
+  },
+  closeShareModal: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    padding: 8,
+  },
+  shareModalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#f8d56b',
+    marginBottom: 20,
+  },
+  qrContainer: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 20,
+  },
+  qrPlaceholder: {
+    width: 180,
+    height: 180,
+    backgroundColor: 'rgba(248, 213, 107, 0.1)',
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareCodeContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  shareCodeLabel: {
+    fontSize: 14,
+    color: '#a0a0a0',
+    marginBottom: 8,
+  },
+  shareCode: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#f8d56b',
+    letterSpacing: 4,
+  },
+  whatsappButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#25D366',
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 30,
+    width: '100%',
+  },
+  whatsappButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginLeft: 10,
   },
 });
