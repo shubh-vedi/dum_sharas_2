@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
+const useNative = Platform.OS !== 'web';
 
 interface Game {
   id: string;
@@ -28,8 +30,8 @@ interface Game {
 export default function ResultsScreen() {
   const router = useRouter();
   const [game, setGame] = useState<Game | null>(null);
-  const scaleAnim = new Animated.Value(0);
-  const fadeAnim = new Animated.Value(0);
+  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     loadGame();
@@ -38,12 +40,12 @@ export default function ResultsScreen() {
         toValue: 1,
         friction: 5,
         tension: 40,
-        useNativeDriver: true,
+        useNativeDriver: useNative,
       }),
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 500,
-        useNativeDriver: true,
+        useNativeDriver: useNative,
       }),
     ]).start();
   }, []);
