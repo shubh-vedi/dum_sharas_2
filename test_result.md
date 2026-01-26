@@ -164,15 +164,18 @@ backend:
 
   - task: "POST /api/games/{id}/turn - Submit turn result"
     implemented: true
-    working: NA
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: NA
         - agent: "main"
         - comment: "Handles correct/skip, updates scores, switches turns, ends game"
+        - working: true
+        - agent: "testing"
+        - comment: "✅ TESTED: Turn submission working perfectly. Correctly updates scores for correct answers, switches turns between teams, increments rounds, handles skips (no score change). Game logic functioning as expected."
 
 frontend:
   - task: "Home Screen with Bollywood theme"
