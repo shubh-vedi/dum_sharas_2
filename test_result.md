@@ -101,3 +101,147 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Build a Dumb Charades Hindi Movie Guessing game app with team setup, turn-based gameplay, movie hints, difficulty levels, scoring system, and timer functionality"
+
+backend:
+  - task: "Hindi Movies Database with 112 movies seeded"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "Movies database seeded with 112 Bollywood movies from 1975-2025 with hero, heroine, year, difficulty metadata"
+
+  - task: "GET /api/stats - Get game statistics"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "Returns total movies, easy/medium/hard counts, and total games played"
+
+  - task: "GET /api/movies/random - Get random movie by difficulty"
+    implemented: true
+    working: NA
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: NA
+        - agent: "main"
+        - comment: "Returns random movie with optional difficulty filter and exclude IDs"
+
+  - task: "POST /api/games - Create new game"
+    implemented: true
+    working: NA
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: NA
+        - agent: "main"
+        - comment: "Creates new game with team setup, settings (timer, rounds, difficulty)"
+
+  - task: "POST /api/games/{id}/turn - Submit turn result"
+    implemented: true
+    working: NA
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: NA
+        - agent: "main"
+        - comment: "Handles correct/skip, updates scores, switches turns, ends game"
+
+frontend:
+  - task: "Home Screen with Bollywood theme"
+    implemented: true
+    working: true
+    file: "/app/frontend/app/index.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "Shows movie count, play now button, how to play, feature icons"
+
+  - task: "Team Setup Screen"
+    implemented: true
+    working: true
+    file: "/app/frontend/app/team-setup.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "Team A/B player inputs, game settings (timer, rounds, difficulty)"
+
+  - task: "Rules Screen"
+    implemented: true
+    working: true
+    file: "/app/frontend/app/rules.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "Shows all game rules and acting tips"
+
+  - task: "Game Play Screen with timer and hints"
+    implemented: true
+    working: NA
+    file: "/app/frontend/app/game-play.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: NA
+        - agent: "main"
+        - comment: "Timer, movie hints, correct/skip buttons, scoreboard"
+
+  - task: "Results Screen"
+    implemented: true
+    working: NA
+    file: "/app/frontend/app/results.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: NA
+        - agent: "main"
+        - comment: "Shows winner, final scores, play again option"
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "GET /api/stats"
+    - "GET /api/movies/random"
+    - "POST /api/games"
+    - "POST /api/games/{id}/turn"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    - agent: "main"
+    - message: "Backend APIs implemented: stats, movies, games CRUD. Frontend screens: home, team-setup, rules, game-play, results. Need testing of full game flow."
