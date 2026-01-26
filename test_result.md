@@ -134,15 +134,18 @@ backend:
 
   - task: "GET /api/movies/random - Get random movie by difficulty"
     implemented: true
-    working: NA
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: NA
         - agent: "main"
         - comment: "Returns random movie with optional difficulty filter and exclude IDs"
+        - working: true
+        - agent: "testing"
+        - comment: "✅ TESTED: All functionality working - basic random movie, difficulty filters (easy/medium/hard), exclude_ids parameter. Returns proper movie objects with all required fields (id, title, year, hero, heroine, word_count, difficulty)."
 
   - task: "POST /api/games - Create new game"
     implemented: true
