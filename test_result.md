@@ -149,15 +149,18 @@ backend:
 
   - task: "POST /api/games - Create new game"
     implemented: true
-    working: NA
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: NA
         - agent: "main"
         - comment: "Creates new game with team setup, settings (timer, rounds, difficulty)"
+        - working: true
+        - agent: "testing"
+        - comment: "✅ TESTED: Game creation working perfectly. Creates teams with correct players, applies settings (timer: 60s, rounds: 5, difficulty: all), sets initial state (team_a turn, round 1, active status). Returns complete game object with UUID."
 
   - task: "POST /api/games/{id}/turn - Submit turn result"
     implemented: true
