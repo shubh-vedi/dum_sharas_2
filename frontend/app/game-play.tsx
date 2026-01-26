@@ -146,12 +146,12 @@ export default function GamePlayScreen() {
             Animated.timing(pulseAnim, {
               toValue: 1.2,
               duration: 200,
-              useNativeDriver: true,
+              useNativeDriver: useNative,
             }),
             Animated.timing(pulseAnim, {
               toValue: 1,
               duration: 200,
-              useNativeDriver: true,
+              useNativeDriver: useNative,
             }),
           ]).start();
         }
