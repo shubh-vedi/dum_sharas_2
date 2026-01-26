@@ -245,11 +245,7 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus:
-    - "GET /api/stats"
-    - "GET /api/movies/random"
-    - "POST /api/games"
-    - "POST /api/games/{id}/turn"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -257,3 +253,5 @@ test_plan:
 agent_communication:
     - agent: "main"
     - message: "Backend APIs implemented: stats, movies, games CRUD. Frontend screens: home, team-setup, rules, game-play, results. Need testing of full game flow."
+    - agent: "testing"
+    - message: "✅ BACKEND TESTING COMPLETE: All 4 high-priority backend APIs tested and working perfectly. Comprehensive testing performed on 25 test cases with 100% success rate. All endpoints (stats, movies/random, games CRUD, turn submission, used movies, game deletion) functioning correctly with proper data validation, scoring logic, and turn management."
