@@ -123,11 +123,14 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: true
         - agent: "main"
         - comment: "Returns total movies, easy/medium/hard counts, and total games played"
+        - working: true
+        - agent: "testing"
+        - comment: "✅ TESTED: Returns correct stats - 112 total movies (35 easy, 37 medium, 40 hard), 0 total games. All required fields present and counts match."
 
   - task: "GET /api/movies/random - Get random movie by difficulty"
     implemented: true
