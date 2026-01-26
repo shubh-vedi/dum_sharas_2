@@ -19,7 +19,7 @@ const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 export default function HomeScreen() {
   const router = useRouter();
-  const [stats, setStats] = useState({ total_movies: 0, total_games: 0 });
+  const [stats, setStats] = useState({ total_movies: 0, total_games: 0, available_movies: 0 });
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
@@ -90,8 +90,17 @@ export default function HomeScreen() {
               onPress={() => router.push('/team-setup')}
               activeOpacity={0.8}
             >
-              <Ionicons name="play-circle" size={32} color="#1a1a2e" />
-              <Text style={styles.playButtonText}>Play Now</Text>
+              <Ionicons name="add-circle" size={28} color="#1a1a2e" />
+              <Text style={styles.playButtonText}>Create Game</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.joinButton}
+              onPress={() => router.push('/join-game')}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="enter" size={28} color="#fff" />
+              <Text style={styles.joinButtonText}>Join Game</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -143,7 +152,7 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 32,
   },
   filmIcon: {
     fontSize: 80,
@@ -170,7 +179,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingVertical: 20,
     borderRadius: 16,
-    marginBottom: 40,
+    marginBottom: 32,
   },
   statBox: {
     alignItems: 'center',
@@ -194,7 +203,8 @@ const styles = StyleSheet.create({
   actionsContainer: {
     width: '100%',
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 32,
+    gap: 12,
   },
   playButton: {
     flexDirection: 'row',
@@ -204,7 +214,6 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     paddingHorizontal: 48,
     borderRadius: 30,
-    marginBottom: 16,
     width: '100%',
     maxWidth: 300,
     shadowColor: '#f8d56b',
@@ -214,10 +223,27 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   playButtonText: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#1a1a2e',
-    marginLeft: 12,
+    marginLeft: 10,
+  },
+  joinButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4ecdc4',
+    paddingVertical: 18,
+    paddingHorizontal: 48,
+    borderRadius: 30,
+    width: '100%',
+    maxWidth: 300,
+  },
+  joinButtonText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginLeft: 10,
   },
   secondaryButton: {
     flexDirection: 'row',
