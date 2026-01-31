@@ -10,7 +10,7 @@ import sys
 from typing import Dict, Any, Optional
 
 # Use the production URL from frontend/.env
-BASE_URL = "https://hindimoviegame.preview.emergentagent.com/api"
+BASE_URL = "https://clone-builder-48.preview.emergentagent.com/api"
 
 class APITester:
     def __init__(self):
