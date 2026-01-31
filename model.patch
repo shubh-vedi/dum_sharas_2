@@ -1,93 +1,98 @@
-diff --git a/test_result.md b/test_result.md
-index 92fd4d4..7262c64 100644
---- a/test_result.md
-+++ b/test_result.md
-@@ -123,47 +123,59 @@ backend:
-     file: "/app/backend/server.py"
-     stuck_count: 0
-     priority: "high"
--    needs_retesting: true
-+    needs_retesting: false
-     status_history:
-         - working: true
-         - agent: "main"
-         - comment: "Returns total movies, easy/medium/hard counts, and total games played"
-+        - working: true
-+        - agent: "testing"
-+        - comment: "✅ TESTED: Returns correct stats - 112 total movies (35 easy, 37 medium, 40 hard), 0 total games. All required fields present and counts match."
- 
-   - task: "GET /api/movies/random - Get random movie by difficulty"
-     implemented: true
--    working: NA
-+    working: true
-     file: "/app/backend/server.py"
-     stuck_count: 0
-     priority: "high"
--    needs_retesting: true
-+    needs_retesting: false
-     status_history:
-         - working: NA
-         - agent: "main"
-         - comment: "Returns random movie with optional difficulty filter and exclude IDs"
-+        - working: true
-+        - agent: "testing"
-+        - comment: "✅ TESTED: All functionality working - basic random movie, difficulty filters (easy/medium/hard), exclude_ids parameter. Returns proper movie objects with all required fields (id, title, year, hero, heroine, word_count, difficulty)."
- 
-   - task: "POST /api/games - Create new game"
-     implemented: true
--    working: NA
-+    working: true
-     file: "/app/backend/server.py"
-     stuck_count: 0
-     priority: "high"
--    needs_retesting: true
-+    needs_retesting: false
-     status_history:
-         - working: NA
-         - agent: "main"
-         - comment: "Creates new game with team setup, settings (timer, rounds, difficulty)"
-+        - working: true
-+        - agent: "testing"
-+        - comment: "✅ TESTED: Game creation working perfectly. Creates teams with correct players, applies settings (timer: 60s, rounds: 5, difficulty: all), sets initial state (team_a turn, round 1, active status). Returns complete game object with UUID."
- 
-   - task: "POST /api/games/{id}/turn - Submit turn result"
-     implemented: true
--    working: NA
-+    working: true
-     file: "/app/backend/server.py"
-     stuck_count: 0
-     priority: "high"
--    needs_retesting: true
-+    needs_retesting: false
-     status_history:
-         - working: NA
-         - agent: "main"
-         - comment: "Handles correct/skip, updates scores, switches turns, ends game"
-+        - working: true
-+        - agent: "testing"
-+        - comment: "✅ TESTED: Turn submission working perfectly. Correctly updates scores for correct answers, switches turns between teams, increments rounds, handles skips (no score change). Game logic functioning as expected."
- 
- frontend:
-   - task: "Home Screen with Bollywood theme"
-@@ -233,15 +245,13 @@ metadata:
-   run_ui: false
- 
- test_plan:
--  current_focus:
--    - "GET /api/stats"
--    - "GET /api/movies/random"
--    - "POST /api/games"
--    - "POST /api/games/{id}/turn"
-+  current_focus: []
-   stuck_tasks: []
-   test_all: false
-   test_priority: "high_first"
- 
- agent_communication:
-     - agent: "main"
--    - message: "Backend APIs implemented: stats, movies, games CRUD. Frontend screens: home, team-setup, rules, game-play, results. Need testing of full game flow."
-\ No newline at end of file
-+    - message: "Backend APIs implemented: stats, movies, games CRUD. Frontend screens: home, team-setup, rules, game-play, results. Need testing of full game flow."
-+    - agent: "testing"
-+    - message: "✅ BACKEND TESTING COMPLETE: All 4 high-priority backend APIs tested and working perfectly. Comprehensive testing performed on 25 test cases with 100% success rate. All endpoints (stats, movies/random, games CRUD, turn submission, used movies, game deletion) functioning correctly with proper data validation, scoring logic, and turn management."
-\ No newline at end of file
+diff --git a/model.patch b/model.patch
+index e8bcda6..e69de29 100644
+--- a/model.patch
++++ b/model.patch
+@@ -1,93 +0,0 @@
+-diff --git a/test_result.md b/test_result.md
+-index 92fd4d4..7262c64 100644
+---- a/test_result.md
+-+++ b/test_result.md
+-@@ -123,47 +123,59 @@ backend:
+-     file: "/app/backend/server.py"
+-     stuck_count: 0
+-     priority: "high"
+--    needs_retesting: true
+-+    needs_retesting: false
+-     status_history:
+-         - working: true
+-         - agent: "main"
+-         - comment: "Returns total movies, easy/medium/hard counts, and total games played"
+-+        - working: true
+-+        - agent: "testing"
+-+        - comment: "✅ TESTED: Returns correct stats - 112 total movies (35 easy, 37 medium, 40 hard), 0 total games. All required fields present and counts match."
+- 
+-   - task: "GET /api/movies/random - Get random movie by difficulty"
+-     implemented: true
+--    working: NA
+-+    working: true
+-     file: "/app/backend/server.py"
+-     stuck_count: 0
+-     priority: "high"
+--    needs_retesting: true
+-+    needs_retesting: false
+-     status_history:
+-         - working: NA
+-         - agent: "main"
+-         - comment: "Returns random movie with optional difficulty filter and exclude IDs"
+-+        - working: true
+-+        - agent: "testing"
+-+        - comment: "✅ TESTED: All functionality working - basic random movie, difficulty filters (easy/medium/hard), exclude_ids parameter. Returns proper movie objects with all required fields (id, title, year, hero, heroine, word_count, difficulty)."
+- 
+-   - task: "POST /api/games - Create new game"
+-     implemented: true
+--    working: NA
+-+    working: true
+-     file: "/app/backend/server.py"
+-     stuck_count: 0
+-     priority: "high"
+--    needs_retesting: true
+-+    needs_retesting: false
+-     status_history:
+-         - working: NA
+-         - agent: "main"
+-         - comment: "Creates new game with team setup, settings (timer, rounds, difficulty)"
+-+        - working: true
+-+        - agent: "testing"
+-+        - comment: "✅ TESTED: Game creation working perfectly. Creates teams with correct players, applies settings (timer: 60s, rounds: 5, difficulty: all), sets initial state (team_a turn, round 1, active status). Returns complete game object with UUID."
+- 
+-   - task: "POST /api/games/{id}/turn - Submit turn result"
+-     implemented: true
+--    working: NA
+-+    working: true
+-     file: "/app/backend/server.py"
+-     stuck_count: 0
+-     priority: "high"
+--    needs_retesting: true
+-+    needs_retesting: false
+-     status_history:
+-         - working: NA
+-         - agent: "main"
+-         - comment: "Handles correct/skip, updates scores, switches turns, ends game"
+-+        - working: true
+-+        - agent: "testing"
+-+        - comment: "✅ TESTED: Turn submission working perfectly. Correctly updates scores for correct answers, switches turns between teams, increments rounds, handles skips (no score change). Game logic functioning as expected."
+- 
+- frontend:
+-   - task: "Home Screen with Bollywood theme"
+-@@ -233,15 +245,13 @@ metadata:
+-   run_ui: false
+- 
+- test_plan:
+--  current_focus:
+--    - "GET /api/stats"
+--    - "GET /api/movies/random"
+--    - "POST /api/games"
+--    - "POST /api/games/{id}/turn"
+-+  current_focus: []
+-   stuck_tasks: []
+-   test_all: false
+-   test_priority: "high_first"
+- 
+- agent_communication:
+-     - agent: "main"
+--    - message: "Backend APIs implemented: stats, movies, games CRUD. Frontend screens: home, team-setup, rules, game-play, results. Need testing of full game flow."
+-\ No newline at end of file
+-+    - message: "Backend APIs implemented: stats, movies, games CRUD. Frontend screens: home, team-setup, rules, game-play, results. Need testing of full game flow."
+-+    - agent: "testing"
+-+    - message: "✅ BACKEND TESTING COMPLETE: All 4 high-priority backend APIs tested and working perfectly. Comprehensive testing performed on 25 test cases with 100% success rate. All endpoints (stats, movies/random, games CRUD, turn submission, used movies, game deletion) functioning correctly with proper data validation, scoring logic, and turn management."
+-\ No newline at end of file
